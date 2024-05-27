@@ -1,15 +1,29 @@
 import styled from "styled-components"
-import { useState } from "react"
 
-function Result() {
-  const [result, setReuslt] = useState("wait for your result...");
-  //여기에 post로 받아온값 불러오기
+function Result({predictedClass}) {
 
-  //가져와서 if문으로 정규화
+const getResult = (predictedClass) => {
+  if (predictedClass === 'acne_1') {
+    return 'Low-level of acne';
+  } 
+  else if (predictedClass === 'acne_2') {
+    return 'medium-level acne';
+  }
+  else if (predictedClass === 'acne_3') {
+    return 'High-level of acne';
+  }
+  else if (predictedClass === 'normal') {
+    return 'No proble! 🥳';
+  }
+  else {
+    return predictedClass;
+  }
+}
+
 
   return (
     <ResultContainer>
-      {result}
+      {getResult(predictedClass)}
     </ResultContainer>
   )
 }

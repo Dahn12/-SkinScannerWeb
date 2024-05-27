@@ -1,28 +1,53 @@
-import styled from "styled-components"
-import { useState } from "react";
+import React, { useState } from 'react';
+import styled from "styled-components";
+import axios from 'axios';
 import Result from "./components/Result";
 import noneImg from "./image/none.png";
 
 function App() {
-  const [uploadImgUrl, setUploadImgUrl] = useState("");
+  const [file, setFile] = useState(null);
+  const [uploadImgUrl, setUploadImgUrl] = useState(noneImg);
+  const [predictedClass, setPredictedClass] = useState('Wait for your result...');
 
-  const onchangeImageUpload = (e) => {
-    const { files } = e.target; // 이벤트 객체로부터 files를 받아옴
-    if (files && files.length > 0) { // files가 존재하고 배열에 파일이 있을 경우
-        const uploadFile = files[0]; 
-        const reader = new FileReader(); // 데이터를 비동기적으로 읽는데 도움을 주는 웹 API 객체
-        reader.readAsDataURL(uploadFile); // 선택한 파일을 데이터 URL로 변환
-        reader.onloadend = () => {
-            setUploadImgUrl(reader.result); // 선택한 이미지를 서버에 보낼 때 uploadImgUrl 값으로 보냄
-        }; // 읽기 동작이 발생하면 성공 여부와 상관없이 호출되는 이벤트 핸들러
+  const handleFileChange = (event) => {
+    const { files } = event.target;
+    if (files && files.length > 0) {
+      const selectedFile = files[0];
+      setFile(selectedFile);
+
+      const reader = new FileReader();
+      reader.readAsDataURL(selectedFile);
+      reader.onloadend = () => {
+        setUploadImgUrl(reader.result);
+      };
     } else {
-        // files가 없거나 파일이 없는 경우 처리
-        console.error('파일이 선택되지 않았습니다.');
-        setUploadImgUrl(noneImg);
-        console.log(uploadImgUrl);
-          }
-};
+      console.error('파일이 선택되지 않았습니다.');
+      setUploadImgUrl(noneImg);
+    }
+  };
 
+  const handleUpload = async () => {
+    if (!file) {
+      alert('Please select a file first!');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await axios.post('/images/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      setPredictedClass(response.data.predicted_class);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+      alert('Error uploading image');
+    }
+  };
 
   return (
     <Container>
@@ -30,58 +55,63 @@ function App() {
       <Wrapper>
         <ImgWrapper>
           <h3>⏬ Put your skin Image here!</h3>
-          <img src = {uploadImgUrl} alt='피부이미지' img = "img"/>
-          <label for="file">
-            <FileUploadBtn>upload</FileUploadBtn>
-          </label>
-          <input style={{display:"none"}} type = "file" name="file" accept = "image/*"  onChange = {onchangeImageUpload}/>
+          <img src={uploadImgUrl} alt='피부 이미지' />
+          <div style={{display:'flex', flexDirection:'row', gap:'1rem'}}>
+            <label for="file">
+              <FileChooseBtn>Choose File</FileChooseBtn>
+            </label>
+            <input style={{display : 'none'}} id="file" type="file" name="file" accept="image/*" onChange={handleFileChange} />
+            <FileUploadBtn onClick={handleUpload}>Upload</FileUploadBtn>
+          </div>
         </ImgWrapper>
         <ResultWrapper>
           <h3>🩻 Your Skin has been scanned</h3>
-          <Result/>
+          <Result predictedClass={predictedClass} />
         </ResultWrapper>
       </Wrapper>
     </Container>
   );
 }
 
-
 const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-`
+`;
+
 const Title = styled.h2`
   font-weight: 700;
   font-size: 4.5rem;
   margin: 2rem auto;
-`
+`;
+
 const Wrapper = styled.div`
   display: flex;
   flex-direction: row;
   gap: 10vh;
-`
+`;
+
 const ImgWrapper = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  img{
+  img {
     width: 30vh;
   }
-  h3{
+  h3 {
     font-weight: 600;
     font-size: 2rem;
     margin: 1rem auto;
   }
-`
+`;
 
-const FileUploadBtn = styled.div`
+const FileChooseBtn = styled.div`
   width: 20vh;
   height: 5vh;
   background-color: aliceblue;
-  color:  #191f2c;
+  color: #191f2c;
   font-weight: 600;
   font-size: 1.2rem;
   border-radius: 10px;
@@ -91,21 +121,40 @@ const FileUploadBtn = styled.div`
   align-items: center;
   justify-content: center;
   &:hover {
-    background: rgb(77,77,77);
+    background: rgb(77, 77, 77);
     color: #fff;
   }
 `
+
+const FileUploadBtn = styled.div`
+  width: 20vh;
+  height: 5vh;
+  background-color: aliceblue;
+  color: #191f2c;
+  font-weight: 600;
+  font-size: 1.2rem;
+  border-radius: 10px;
+  margin: 1rem auto;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  &:hover {
+    background: rgb(77, 77, 77);
+    color: #fff;
+  }
+`;
 
 const ResultWrapper = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
   
-  h3{
+  h3 {
     font-weight: 600;
     font-size: 2rem;
     margin: 1rem auto;
   }
-`
+`;
 
 export default App;
